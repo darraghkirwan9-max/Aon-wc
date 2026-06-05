@@ -1,30 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
-import { supabase } from './supabase.js'
-
-// ── Colours ────────────────────────────────────────────────────────────────
-const C = {
-  navy: '#0B1628',
-  navyMid: '#162344',
-  navyLight: '#1E3260',
-  gold: '#F5C842',
-  green: '#28C76F',
-  red: '#E84855',
-  white: '#F0F4FF',
-  muted: '#8898BB',
-}
-
-const TODAY = new Date().toISOString().slice(0, 10)
-const ADMIN_CODE = 'aonhc2026'
-
-// ── Global styles ──────────────────────────────────────────────────────────
-const globalCSS = `
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: ${C.navy}; color: ${C.white}; font-family: 'DM Sans', sans-serif; min-height: 100vh; }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: ${C.navyMid}; }
-  ::-webkit-scrollbar-thumb { background: ${C.navyLight}; border-radius: 2px; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-  .fade-in { animation: fadeIn .3s ease both; }
+: 
 `
 
 // ── Primitives ─────────────────────────────────────────────────────────────
@@ -187,8 +161,7 @@ function AdminPanel({ onBack }) {
       <Card style={{ marginBottom: 20 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
           <div><Label>Date</Label><Input type="date" value={form.date} onChange={v => setForm(f => ({ ...f, date: v }))} /></div>
-          <div><Label>Match Label</Label><Input value={form.match} onChange={v => setForm(f => ({ ...f, match: v }))} placeholder="Group A — Day 3" /></div>
-          <div><Label>Team A</Label><Input value={form.teamA} onChange={v => setForm(f => ({ ...f, teamA: v }))} placeholder="Brazil" /></div>
+          <div><abel>Team A</Label><Input value={form.teamA} onChange={v => setForm(f => ({ ...f, teamA: v }))} placeholder="Brazil" /></div>
           <div><Label>Team B</Label><Input value={form.teamB} onChange={v => setForm(f => ({ ...f, teamB: v }))} placeholder="Argentina" /></div>
         </div>
 
@@ -196,23 +169,7 @@ function AdminPanel({ onBack }) {
           <Label>HC IQ Question</Label>
           <Input value={form.hcQ} onChange={v => setForm(f => ({ ...f, hcQ: v }))}
             placeholder="Which country has the highest voluntary turnover rate?" />
-        </div>
-
-        {[0, 1, 2, 3].map(i => (
-          <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-            <div onClick={() => setForm(f => ({ ...f, answer: i }))} style={{
-              width: 20, height: 20, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
-              border: `2px solid ${form.answer === i ? C.gold : C.navyLight}`,
-              background: form.answer === i ? C.gold : 'transparent',
-            }} />
-< truncated lines 208-401 >
-        )}
-      </Card>
-
-      {!submitted ? (
-        <Btn onClick={submit} disabled={!matchPick || hcPick === null || submitting}>
-          {submitting ? 'Locking in…' : 'Lock In Predictions'}
-        </Btn>
+        </
       ) : (
         <Card gold={matchResult && hcRevealed} style={{ textAlign: 'center', padding: 16 }}>
           {matchResult && hcRevealed
@@ -286,113 +243,7 @@ function Leaderboard() {
     <div className="fade-in">
       {board.map((p, i) => (
         <div key={p.name} style={{
-          display: 'flex', alignItems: 'center', gap: 14,
-          padding: '14px 16px', marginBottom: 8, borderRadius: 8,
-          background: i === 0 ? C.gold + '11' : C.navyMid,
-          border: `1px solid ${i === 0 ? C.gold + '44' : C.navyLight}`,
-        }}>
-          <span style={{ fontSize: 20, width: 28, textAlign: 'center' }}>{medals[i] || i + 1}</span>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 600, fontSize: 15 }}>{p.name}</p>
-            <p style={{ fontSize: 12, color: C.muted }}>
-              ⚽ {p.matchPts}pts match · 🧠 {p.hcPts}pts HC · {p.entered} {p.entered === 1 ? 'day' : 'days'}
-            </p>
-          </div>
-          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 32, color: i === 0 ? C.gold : C.white, letterSpacing: 1 }}>
-            {p.total}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ── Root ───────────────────────────────────────────────────────────────────
-export default function App() {
-  const [view, setView] = useState('play')
-  const [name, setName] = useState(() => localStorage.getItem('wc_name') || '')
-  const [nameInput, setNameInput] = useState('')
-  const [adminCode, setAdminCode] = useState('')
-  const [adminUnlocked, setAdminUnlocked] = useState(false)
-  const [showAdmin, setShowAdmin] = useState(false)
-
-  const enterName = () => {
-    if (!nameInput.trim()) return
-    localStorage.setItem('wc_name', nameInput.trim())
-    setName(nameInput.trim())
-  }
-
-  const tryAdmin = () => {
-    if (adminCode === ADMIN_CODE) { setAdminUnlocked(true); setShowAdmin(true) }
-  }
-
-  if (showAdmin && adminUnlocked) return (
-    <>
-      <style>{globalCSS}</style>
-      <Header name={name} isAdmin />
-      <AdminPanel onBack={() => setShowAdmin(false)} />
-    </>
-  )
-
-  return (
-    <>
-      <style>{globalCSS}</style>
-      <Header name={name} isAdmin={adminUnlocked} onAdminClick={() => setShowAdmin(true)} />
-
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: 24 }}>
-        {/* Tabs */}
-        <div style={{
-          display: 'flex', gap: 4, marginBottom: 24,
-          background: C.navyMid, borderRadius: 8, padding: 4,
-          border: `1px solid ${C.navyLight}`
-        }}>
-          {[['play', "Today's Challenge"], ['board', 'Leaderboard']].map(([v, label]) => (
-            <button key={v} onClick={() => setView(v)} style={{
-              flex: 1, padding: '8px 0', borderRadius: 6, border: 'none',
-              background: view === v ? C.gold : 'transparent',
-              color: view === v ? C.navy : C.muted,
-              fontFamily: "'DM Sans'", fontWeight: 600, fontSize: 14,
-              cursor: 'pointer', transition: 'all .15s'
-            }}>{label}</button>
-          ))}
-        </div>
-
-        {/* Name gate */}
-        {view === 'play' && !name && (
-          <Card style={{ textAlign: 'center', padding: 40 }} className="fade-in">
-            <div style={{ fontSize: 36, marginBottom: 12 }}>⚽</div>
-            <p style={{ fontFamily: "'Bebas Neue'", fontSize: 26, letterSpacing: 2, marginBottom: 6 }}>Enter Your Name</p>
-            <p style={{ color: C.muted, fontSize: 13, marginBottom: 24 }}>Your name appears on the leaderboard</p>
-            <div style={{ display: 'flex', gap: 10, maxWidth: 300, margin: '0 auto' }}>
-              <Input value={nameInput} onChange={setNameInput} placeholder="Your name"
-                onKeyDown={e => e.key === 'Enter' && enterName()} />
-              <Btn onClick={enterName}>Go</Btn>
-            </div>
-          </Card>
-        )}
-
-        {view === 'play' && name && <PlayerView name={name} />}
-        {view === 'board' && <Leaderboard />}
-
-        {/* Admin unlock */}
-        <div style={{ marginTop: 48, paddingTop: 24, borderTop: `1px solid ${C.navyLight}`, textAlign: 'center' }}>
-          {!adminUnlocked ? (
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', maxWidth: 240, margin: '0 auto' }}>
-              <Input type="password" value={adminCode} onChange={setAdminCode} placeholder="Admin code" />
-              <Btn small variant="ghost" onClick={tryAdmin}>→</Btn>
-            </div>
-          ) : (
-            <Btn small variant="ghost" onClick={() => setShowAdmin(true)}>Admin Panel →</Btn>
-          )}
-        </div>
-      </div>
-    </>
-  )
-}
-
-function Header({ name, isAdmin, onAdminClick }) {
-  return (
-    <div style={{
+          display: 'flex', alignItems: 'center', gap: 
       background: C.navyMid, borderBottom: `1px solid ${C.navyLight}`,
       padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
     }}>
