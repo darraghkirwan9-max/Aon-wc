@@ -174,6 +174,16 @@ async function getAllSubmissions() {
   const { data } = await supabase.from('submissions').select('date, player, data')
   return data || []
 }
+async function registerPlayer(name, team) {
+  const { error } = await supabase.from('players').insert({ name, team })
+  return !error
+}
+
+async function isNameTaken(name) {
+  const { data } = await supabase.from('players').select('name').eq('name', name).single()
+  return !!data
+}
+
 async function getExtraMatches() {
   const { data } = await supabase.from('questions').select('date, data').order('date', { ascending: true })
   return (data || []).map(q => ({ ...q.data, id: q.date, isKnockout: true }))
@@ -715,15 +725,17 @@ export default function App() {
   }
 
   const confirm = async () => {
-    setChecking(true)
-    const allSubs = await getAllSubmissions()
-    const taken = allSubs.some(s => s.player.toLowerCase() === nameInput.trim().toLowerCase())
-    if (taken) { setNameTaken(true); setChecking(false); setStep('register'); return }
-    localStorage.setItem('wc_name', nameInput.trim())
-    localStorage.setItem('wc_team', teamInput)
-    setName(nameInput.trim()); setTeam(teamInput)
-    setChecking(false)
-  }
+  setChecking(true)
+  const taken = await isNameTaken(nameInput.trim())
+  if (taken) { setNameTaken(true); setChecking(false); setStep('register'); return }
+  const success = await registerPlayer(nameInput.trim(), teamInput)
+  if (!success) { setNameTaken(true); setChecking(false); setStep('register'); return }
+  localStorage.setItem('wc_name', nameInput.trim())
+  localStorage.setItem('wc_team', teamInput)
+  setName(nameInput.trim()); setTeam(teamInput)
+  setChecking(false)
+}
+
 
   const tryAdmin = () => {
     if (adminCode === ADMIN_CODE) { setAdminUnlocked(true); setShowAdmin(true) }
