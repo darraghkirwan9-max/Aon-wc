@@ -699,17 +699,30 @@ export default function App() {
   const [showAdmin, setShowAdmin] = useState(false)
   const [reveals, setReveals] = useState({})
   const [extraMatches, setExtraMatches] = useState([])
+  const [step, setStep] = useState('register') // 'register' | 'confirm'
+  const [checking, setChecking] = useState(false)
+  const [nameTaken, setNameTaken] = useState(false)
 
   useEffect(() => {
     getAllReveals().then(setReveals)
     getExtraMatches().then(setExtraMatches)
   }, [])
 
-  const enter = () => {
+  const goToConfirm = () => {
     if (!nameInput.trim() || !teamInput) return
+    setNameTaken(false)
+    setStep('confirm')
+  }
+
+  const confirm = async () => {
+    setChecking(true)
+    const allSubs = await getAllSubmissions()
+    const taken = allSubs.some(s => s.player.toLowerCase() === nameInput.trim().toLowerCase())
+    if (taken) { setNameTaken(true); setChecking(false); setStep('register'); return }
     localStorage.setItem('wc_name', nameInput.trim())
     localStorage.setItem('wc_team', teamInput)
     setName(nameInput.trim()); setTeam(teamInput)
+    setChecking(false)
   }
 
   const tryAdmin = () => {
@@ -740,7 +753,7 @@ export default function App() {
           ))}
         </div>
 
-        {view === 'play' && (!name || !team) && (
+        {view === 'play' && (!name || !team) && step === 'register' && (
           <Card style={{ textAlign: 'center', padding: 40 }} className="fade-in">
             <div style={{ fontSize: 36, marginBottom: 12 }}>⚽</div>
             <p style={{ fontFamily: "'Bebas Neue'", fontSize: 26, letterSpacing: 2, marginBottom: 6 }}>Join the Challenge</p>
@@ -756,9 +769,34 @@ export default function App() {
                 }}>{t}</button>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: 10, maxWidth: 300, margin: '0 auto' }}>
-              <Input value={nameInput} onChange={setNameInput} placeholder="Your name" />
-              <Btn onClick={enter} disabled={!nameInput.trim() || !teamInput}>Go</Btn>
+            <div style={{ display: 'flex', gap: 10, maxWidth: 300, margin: '0 auto 12px' }}>
+              <Input value={nameInput} onChange={v => { setNameInput(v); setNameTaken(false) }} placeholder="Your name" />
+              <Btn onClick={goToConfirm} disabled={!nameInput.trim() || !teamInput}>Go</Btn>
+            </div>
+            {nameTaken && (
+              <p style={{ color: C.red, fontSize: 13, marginTop: 8 }}>
+                That name is already taken — try adding your surname initial.
+              </p>
+            )}
+          </Card>
+        )}
+
+        {view === 'play' && (!name || !team) && step === 'confirm' && (
+          <Card style={{ textAlign: 'center', padding: 40 }} className="fade-in">
+            <div style={{ fontSize: 36, marginBottom: 16 }}>👋</div>
+            <p style={{ fontFamily: "'Bebas Neue'", fontSize: 24, letterSpacing: 2, marginBottom: 8 }}>Confirm Your Details</p>
+            <div style={{ background: C.navyLight, borderRadius: 8, padding: 16, marginBottom: 16 }}>
+              <p style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>{nameInput}</p>
+              <p style={{ color: teamColor(teamInput), fontWeight: 600, fontSize: 14 }}>{teamInput}</p>
+            </div>
+            <p style={{ color: C.muted, fontSize: 13, marginBottom: 24 }}>
+              ⚠️ Your name can't be changed once you join.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <Btn variant="ghost" small onClick={() => setStep('register')}>← Back</Btn>
+              <Btn onClick={confirm} disabled={checking}>
+                {checking ? 'Checking...' : 'Confirm & Join'}
+              </Btn>
             </div>
           </Card>
         )}
@@ -781,6 +819,7 @@ export default function App() {
     </>
   )
 }
+
 
 function Header({ name, team, isAdmin, onAdminClick }) {
   const color = team ? teamColor(team) : C.muted
